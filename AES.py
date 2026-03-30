@@ -3,25 +3,266 @@ import os
 
 # THUẬT TOÁN AES-128
 SBOX = [
-    0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
-    0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
-    0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
-    0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
-    0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
-    0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
-    0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
-    0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
-    0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
-    0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
-    0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
-    0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
-    0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
-    0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
-    0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
-    0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+    0x63,
+    0x7C,
+    0x77,
+    0x7B,
+    0xF2,
+    0x6B,
+    0x6F,
+    0xC5,
+    0x30,
+    0x01,
+    0x67,
+    0x2B,
+    0xFE,
+    0xD7,
+    0xAB,
+    0x76,
+    0xCA,
+    0x82,
+    0xC9,
+    0x7D,
+    0xFA,
+    0x59,
+    0x47,
+    0xF0,
+    0xAD,
+    0xD4,
+    0xA2,
+    0xAF,
+    0x9C,
+    0xA4,
+    0x72,
+    0xC0,
+    0xB7,
+    0xFD,
+    0x93,
+    0x26,
+    0x36,
+    0x3F,
+    0xF7,
+    0xCC,
+    0x34,
+    0xA5,
+    0xE5,
+    0xF1,
+    0x71,
+    0xD8,
+    0x31,
+    0x15,
+    0x04,
+    0xC7,
+    0x23,
+    0xC3,
+    0x18,
+    0x96,
+    0x05,
+    0x9A,
+    0x07,
+    0x12,
+    0x80,
+    0xE2,
+    0xEB,
+    0x27,
+    0xB2,
+    0x75,
+    0x09,
+    0x83,
+    0x2C,
+    0x1A,
+    0x1B,
+    0x6E,
+    0x5A,
+    0xA0,
+    0x52,
+    0x3B,
+    0xD6,
+    0xB3,
+    0x29,
+    0xE3,
+    0x2F,
+    0x84,
+    0x53,
+    0xD1,
+    0x00,
+    0xED,
+    0x20,
+    0xFC,
+    0xB1,
+    0x5B,
+    0x6A,
+    0xCB,
+    0xBE,
+    0x39,
+    0x4A,
+    0x4C,
+    0x58,
+    0xCF,
+    0xD0,
+    0xEF,
+    0xAA,
+    0xFB,
+    0x43,
+    0x4D,
+    0x33,
+    0x85,
+    0x45,
+    0xF9,
+    0x02,
+    0x7F,
+    0x50,
+    0x3C,
+    0x9F,
+    0xA8,
+    0x51,
+    0xA3,
+    0x40,
+    0x8F,
+    0x92,
+    0x9D,
+    0x38,
+    0xF5,
+    0xBC,
+    0xB6,
+    0xDA,
+    0x21,
+    0x10,
+    0xFF,
+    0xF3,
+    0xD2,
+    0xCD,
+    0x0C,
+    0x13,
+    0xEC,
+    0x5F,
+    0x97,
+    0x44,
+    0x17,
+    0xC4,
+    0xA7,
+    0x7E,
+    0x3D,
+    0x64,
+    0x5D,
+    0x19,
+    0x73,
+    0x60,
+    0x81,
+    0x4F,
+    0xDC,
+    0x22,
+    0x2A,
+    0x90,
+    0x88,
+    0x46,
+    0xEE,
+    0xB8,
+    0x14,
+    0xDE,
+    0x5E,
+    0x0B,
+    0xDB,
+    0xE0,
+    0x32,
+    0x3A,
+    0x0A,
+    0x49,
+    0x06,
+    0x24,
+    0x5C,
+    0xC2,
+    0xD3,
+    0xAC,
+    0x62,
+    0x91,
+    0x95,
+    0xE4,
+    0x79,
+    0xE7,
+    0xC8,
+    0x37,
+    0x6D,
+    0x8D,
+    0xD5,
+    0x4E,
+    0xA9,
+    0x6C,
+    0x56,
+    0xF4,
+    0xEA,
+    0x65,
+    0x7A,
+    0xAE,
+    0x08,
+    0xBA,
+    0x78,
+    0x25,
+    0x2E,
+    0x1C,
+    0xA6,
+    0xB4,
+    0xC6,
+    0xE8,
+    0xDD,
+    0x74,
+    0x1F,
+    0x4B,
+    0xBD,
+    0x8B,
+    0x8A,
+    0x70,
+    0x3E,
+    0xB5,
+    0x66,
+    0x48,
+    0x03,
+    0xF6,
+    0x0E,
+    0x61,
+    0x35,
+    0x57,
+    0xB9,
+    0x86,
+    0xC1,
+    0x1D,
+    0x9E,
+    0xE1,
+    0xF8,
+    0x98,
+    0x11,
+    0x69,
+    0xD9,
+    0x8E,
+    0x94,
+    0x9B,
+    0x1E,
+    0x87,
+    0xE9,
+    0xCE,
+    0x55,
+    0x28,
+    0xDF,
+    0x8C,
+    0xA1,
+    0x89,
+    0x0D,
+    0xBF,
+    0xE6,
+    0x42,
+    0x68,
+    0x41,
+    0x99,
+    0x2D,
+    0x0F,
+    0xB0,
+    0x54,
+    0xBB,
+    0x16,
 ]
 INV_SBOX = [0] * 256
-for i, val in enumerate(SBOX): INV_SBOX[val] = i
+for i, val in enumerate(SBOX):
+    INV_SBOX[val] = i
 RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 
 
@@ -32,7 +273,8 @@ def xtime(a):
 def mul_gf(a, b):
     res = 0
     for _ in range(8):
-        if b & 1: res ^= a
+        if b & 1:
+            res ^= a
         a = xtime(a)
         b >>= 1
     return res
@@ -41,76 +283,167 @@ def mul_gf(a, b):
 def key_expansion(key):
     w = list(key)
     for i in range(4, 44):
-        temp = w[(i - 1) * 4: i * 4]
+        temp = w[(i - 1) * 4 : i * 4]
         if i % 4 == 0:
             temp = [SBOX[b] for b in temp[1:] + temp[:1]]
             temp[0] ^= RCON[i // 4]
-        for j in range(4): w.append(w[(i - 4) * 4 + j] ^ temp[j])
-    return [w[i * 16:(i + 1) * 16] for i in range(11)]
+        for j in range(4):
+            w.append(w[(i - 4) * 4 + j] ^ temp[j])
+    return [w[i * 16 : (i + 1) * 16] for i in range(11)]
 
 
 def mix_columns(s, inv=False):
     for i in range(0, 16, 4):
-        c = s[i:i + 4]
+        c = s[i : i + 4]
         if not inv:
             s[i] = xtime(c[0]) ^ (xtime(c[1]) ^ c[1]) ^ c[2] ^ c[3]
             s[i + 1] = c[0] ^ xtime(c[1]) ^ (xtime(c[2]) ^ c[2]) ^ c[3]
             s[i + 2] = c[0] ^ c[1] ^ xtime(c[2]) ^ (xtime(c[3]) ^ c[3])
             s[i + 3] = (xtime(c[0]) ^ c[0]) ^ c[1] ^ c[2] ^ xtime(c[3])
         else:
-            s[i] = mul_gf(c[0], 0x0e) ^ mul_gf(c[1], 0x0b) ^ mul_gf(c[2], 0x0d) ^ mul_gf(c[3], 0x09)
-            s[i + 1] = mul_gf(c[0], 0x09) ^ mul_gf(c[1], 0x0e) ^ mul_gf(c[2], 0x0b) ^ mul_gf(c[3], 0x0d)
-            s[i + 2] = mul_gf(c[0], 0x0d) ^ mul_gf(c[1], 0x09) ^ mul_gf(c[2], 0x0e) ^ mul_gf(c[3], 0x0b)
-            s[i + 3] = mul_gf(c[0], 0x0b) ^ mul_gf(c[1], 0x0d) ^ mul_gf(c[2], 0x09) ^ mul_gf(c[3], 0x0e)
+            s[i] = (
+                mul_gf(c[0], 0x0E)
+                ^ mul_gf(c[1], 0x0B)
+                ^ mul_gf(c[2], 0x0D)
+                ^ mul_gf(c[3], 0x09)
+            )
+            s[i + 1] = (
+                mul_gf(c[0], 0x09)
+                ^ mul_gf(c[1], 0x0E)
+                ^ mul_gf(c[2], 0x0B)
+                ^ mul_gf(c[3], 0x0D)
+            )
+            s[i + 2] = (
+                mul_gf(c[0], 0x0D)
+                ^ mul_gf(c[1], 0x09)
+                ^ mul_gf(c[2], 0x0E)
+                ^ mul_gf(c[3], 0x0B)
+            )
+            s[i + 3] = (
+                mul_gf(c[0], 0x0B)
+                ^ mul_gf(c[1], 0x0D)
+                ^ mul_gf(c[2], 0x09)
+                ^ mul_gf(c[3], 0x0E)
+            )
 
 
-def aes_main(block, round_keys, mode='encrypt'):
+def aes_main(block, round_keys, mode="encrypt"):
     state = list(block)
-    if mode == 'encrypt':
+    if mode == "encrypt":
         # AddRoundKey
-        for i in range(16): state[i] ^= round_keys[0][i]
+        for i in range(16):
+            state[i] ^= round_keys[0][i]
         for r in range(1, 10):
             # SubBytes
-            for i in range(16): state[i] = SBOX[state[i]]
+            for i in range(16):
+                state[i] = SBOX[state[i]]
             # ShiftRows.
-            state[1], state[5], state[9], state[13] = state[5], state[9], state[13], state[1]
-            state[2], state[6], state[10], state[14] = state[10], state[14], state[2], state[6]
-            state[3], state[7], state[11], state[15] = state[15], state[3], state[7], state[11]
+            state[1], state[5], state[9], state[13] = (
+                state[5],
+                state[9],
+                state[13],
+                state[1],
+            )
+            state[2], state[6], state[10], state[14] = (
+                state[10],
+                state[14],
+                state[2],
+                state[6],
+            )
+            state[3], state[7], state[11], state[15] = (
+                state[15],
+                state[3],
+                state[7],
+                state[11],
+            )
             # MixColumns
             mix_columns(state)
             # AddRoundKey
-            for i in range(16): state[i] ^= round_keys[r][i]
+            for i in range(16):
+                state[i] ^= round_keys[r][i]
 
         # SubBytes
-        for i in range(16): state[i] = SBOX[state[i]]
+        for i in range(16):
+            state[i] = SBOX[state[i]]
         # ShiftRows.
-        state[1], state[5], state[9], state[13] = state[5], state[9], state[13], state[1]
-        state[2], state[6], state[10], state[14] = state[10], state[14], state[2], state[6]
-        state[3], state[7], state[11], state[15] = state[15], state[3], state[7], state[11]
+        state[1], state[5], state[9], state[13] = (
+            state[5],
+            state[9],
+            state[13],
+            state[1],
+        )
+        state[2], state[6], state[10], state[14] = (
+            state[10],
+            state[14],
+            state[2],
+            state[6],
+        )
+        state[3], state[7], state[11], state[15] = (
+            state[15],
+            state[3],
+            state[7],
+            state[11],
+        )
         # AddRoundKey
-        for i in range(16): state[i] ^= round_keys[10][i]
+        for i in range(16):
+            state[i] ^= round_keys[10][i]
     else:
-        for i in range(16): state[i] ^= round_keys[10][i]
+        for i in range(16):
+            state[i] ^= round_keys[10][i]
         for r in range(9, 0, -1):
             # InvShiftRows
-            state[1], state[5], state[9], state[13] = state[13], state[1], state[5], state[9]
-            state[2], state[6], state[10], state[14] = state[10], state[14], state[2], state[6]
-            state[3], state[7], state[11], state[15] = state[7], state[11], state[15], state[3]
+            state[1], state[5], state[9], state[13] = (
+                state[13],
+                state[1],
+                state[5],
+                state[9],
+            )
+            state[2], state[6], state[10], state[14] = (
+                state[10],
+                state[14],
+                state[2],
+                state[6],
+            )
+            state[3], state[7], state[11], state[15] = (
+                state[7],
+                state[11],
+                state[15],
+                state[3],
+            )
             # InvSubBytes
-            for i in range(16): state[i] = INV_SBOX[state[i]]
+            for i in range(16):
+                state[i] = INV_SBOX[state[i]]
             # AddRoundKey
-            for i in range(16): state[i] ^= round_keys[r][i]
+            for i in range(16):
+                state[i] ^= round_keys[r][i]
             # InvMixColumns
             mix_columns(state, inv=True)
 
         # InvShiftRows
-        state[1], state[5], state[9], state[13] = state[13], state[1], state[5], state[9]
-        state[2], state[6], state[10], state[14] = state[10], state[14], state[2], state[6]
-        state[3], state[7], state[11], state[15] = state[7], state[11], state[15], state[3]
+        state[1], state[5], state[9], state[13] = (
+            state[13],
+            state[1],
+            state[5],
+            state[9],
+        )
+        state[2], state[6], state[10], state[14] = (
+            state[10],
+            state[14],
+            state[2],
+            state[6],
+        )
+        state[3], state[7], state[11], state[15] = (
+            state[7],
+            state[11],
+            state[15],
+            state[3],
+        )
         # InvSubBytes
-        for i in range(16): state[i] = INV_SBOX[state[i]]
+        for i in range(16):
+            state[i] = INV_SBOX[state[i]]
         # AddRoundKey
-        for i in range(16): state[i] ^= round_keys[0][i]
+        for i in range(16):
+            state[i] ^= round_keys[0][i]
 
     return bytes(state)
 
@@ -123,7 +456,7 @@ def main():
 
     # 1. Nhập thông tin Khóa và File
     key_in = input("[?] Nhập khóa mã hóa (tối đa 16 ký tự): ")
-    key_str = key_in.encode('utf-8').ljust(16, b'\0')[:16]  # Đảm bảo đúng 16 byte
+    key_str = key_in.encode("utf-8").ljust(16, b"\0")[:16]  # Đảm bảo đúng 16 byte
 
     input_file = input("[?] Nhập tên file cần mã hóa (VD: input.txt): ")
 
@@ -148,7 +481,11 @@ def main():
 
     start_e = time.perf_counter()
     encrypted = b"".join(
-        [aes_main(data_to_encrypt[i:i + 16], r_keys, 'encrypt') for i in range(0, len(data_to_encrypt), 16)])
+        [
+            aes_main(data_to_encrypt[i : i + 16], r_keys, "encrypt")
+            for i in range(0, len(data_to_encrypt), 16)
+        ]
+    )
     end_e = time.perf_counter()
     time_encrypt = end_e - start_e
 
@@ -160,7 +497,12 @@ def main():
     print("[*] Đang tiến hành GIẢI MÃ...")
 
     start_d = time.perf_counter()
-    decrypted_raw = b"".join([aes_main(encrypted[i:i + 16], r_keys, 'decrypt') for i in range(0, len(encrypted), 16)])
+    decrypted_raw = b"".join(
+        [
+            aes_main(encrypted[i : i + 16], r_keys, "decrypt")
+            for i in range(0, len(encrypted), 16)
+        ]
+    )
 
     # Gỡ Padding
     pad_len = decrypted_raw[-1]
