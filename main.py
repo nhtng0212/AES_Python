@@ -3,399 +3,342 @@ from tkinter import filedialog, messagebox
 import time
 import os
 
-# Import các hàm thuật toán từ file AES.py của bạn
+# Import file thuật toán AES của bạn
 import AES
 
 
-class AESInterface:
+class AESOceanBreezeApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("AES-128 Encryptor/Decryptor - Nhóm 18")
-        self.root.geometry("1000x750")  # Tăng kích thước để chứa bảng Terminal Log
+        self.root.title("AES-128 Ocean Breeze - Nhóm 18")
+        self.root.geometry("1100x750")
 
+        # --- BẢNG MÀU SÁNG (WHITE / BLUE / GREEN) ---
+        self.BG_MAIN = "#f0f4f8"  # Xanh nhạt siêu sáng (Màu nền app)
+        self.BG_CARD = "#ffffff"  # Trắng tinh (Nền các khung Card)
+        self.FG_TEXT = "#0f172a"  # Xanh Navy siêu đậm (Chữ chính - chống mờ)
+        self.FG_DIM = "#475569"  # Xám tro (Chữ phụ)
+
+        self.COLOR_ENC = "#0284c7"  # Xanh dương đậm (Mã hóa)
+        self.COLOR_DEC = "#059669"  # Xanh lá cây (Giải mã)
+        self.COLOR_SAV = "#2563eb"  # Xanh dương hoàng gia (Lưu file)
+        self.COLOR_ACC = "#0ea5e9"  # Xanh dương lơ (Tab đang chọn)
+        self.BORDER = "#cbd5e1"  # Xám viền (Chống mờ lòa giữa các khối)
+
+        self.root.configure(bg=self.BG_MAIN)
+
+        # Biến trạng thái
         self.filepath = ""
-        self.file_ext = ""
         self.file_name_only = ""
-        self.current_action = ""
-
         self.input_data = b""
         self.output_data = b""
+        self.current_action = ""
 
-        # --- KHU VỰC ĐIỀU KHIỂN ---
-        control_frame = tk.Frame(root, pady=10)
-        control_frame.pack(fill="x")
+        self.show_pwd_var = tk.BooleanVar(value=False)
+        self.in_format = tk.StringVar(value="Text")
+        self.out_format = tk.StringVar(value="Hex")
 
-        # Khóa
-        key_frame = tk.Frame(control_frame)
-        key_frame.pack(pady=5)
-        tk.Label(
-            key_frame, text="Khóa Bí Mật (Tối đa 16 ký tự):", font=("Arial", 10, "bold")
-        ).pack(side="left")
+        self._build_ui()
+        self.write_log("Hệ thống AES-128 Ocean Breeze đã khởi động.")
+        self.write_log("Giao diện: Sáng (Light) | Chủ đạo: Trắng - Xanh Dương - Xanh Lá.")
 
-        self.key_entry = tk.Entry(key_frame, width=30, show="*", font=("Arial", 10))
-        self.key_entry.pack(side="left", padx=5)
-        self.btn_show_pwd = tk.Button(
-            key_frame,
-            text="👁",
-            command=self.toggle_password,
-            font=("Arial", 10),
-            cursor="hand2",
-        )
-        self.btn_show_pwd.pack(side="left")
+    def _build_ui(self):
+        font_title = ("Segoe UI", 16, "bold")
+        font_btn = ("Segoe UI", 10, "bold")
+        font_text = ("Consolas", 10)
+        font_label = ("Segoe UI", 10, "bold")
 
-        # Chọn File
-        file_frame = tk.Frame(control_frame)
-        file_frame.pack(pady=5)
-        self.lbl_filename = tk.Label(
-            file_frame,
-            text="Chưa chọn file...",
-            width=40,
-            anchor="w",
-            fg="gray",
-            bg="white",
-            relief="sunken",
-        )
-        self.lbl_filename.pack(side="left", padx=5)
-        tk.Button(
-            file_frame, text="Chọn File Gốc", command=self.select_file, cursor="hand2"
-        ).pack(side="left")
+        # ================= HEADER (KHU VỰC NHẬP LIỆU) =================
+        # Dùng viền highlightbackground để tạo cảm giác "Card" nổi lên
+        header_frame = tk.Frame(self.root, bg=self.BG_CARD, highlightbackground=self.BORDER, highlightthickness=1)
+        header_frame.pack(side="top", fill="x", padx=15, pady=15)
 
-        # Nút chức năng
-        btn_frame = tk.Frame(control_frame)
-        btn_frame.pack(pady=10)
-        tk.Button(
-            btn_frame,
-            text="Mã Hóa File",
-            command=self.encrypt_action,
-            bg="#4CAF50",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            width=15,
-            cursor="hand2",
-        ).pack(side="left", padx=10)
-        tk.Button(
-            btn_frame,
-            text="Giải Mã File",
-            command=self.decrypt_action,
-            bg="#2196F3",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            width=15,
-            cursor="hand2",
-        ).pack(side="left", padx=10)
+        # Dòng 1: Tên App & Chọn file
+        row1 = tk.Frame(header_frame, bg=self.BG_CARD)
+        row1.pack(fill="x", padx=20, pady=(15, 5))
 
-        self.btn_export = tk.Button(
-            btn_frame,
-            text="💾 Xuất File (Lưu)",
-            command=self.export_file,
-            bg="#FF9800",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            width=15,
-            cursor="hand2",
-            state="disabled",
-        )
-        self.btn_export.pack(side="left", padx=10)
+        tk.Label(row1, text="🌊 AES-128 STUDIO", font=font_title, bg=self.BG_CARD, fg=self.COLOR_ENC).pack(side="left")
 
-        # --- KHU VỰC TERMINAL LOG BÁO CÁO (Phía dưới cùng) ---
-        log_frame = tk.Frame(root, padx=10, pady=5)
-        log_frame.pack(side="bottom", fill="x")
-        tk.Label(
-            log_frame,
-            text="TERMINAL LOG (Báo cáo quá trình):",
-            font=("Arial", 10, "bold"),
-        ).pack(anchor="w")
-        self.txt_log = tk.Text(
-            log_frame, height=6, bg="black", fg="#00FF00", font=("Consolas", 10)
-        )
-        self.txt_log.pack(fill="x")
-        self.print_log("======================================================")
-        self.print_log(" BÀI TẬP NHÓM 18: MÃ HÓA VÀ GIẢI MÃ FILE BẰNG AES-128")
-        self.print_log("======================================================")
+        btn_open = tk.Button(row1, text="📂 TẢI FILE GỐC", bg="#e2e8f0", fg=self.FG_TEXT, font=font_btn, relief="flat",
+                             activebackground="#cbd5e1", cursor="hand2", command=self.load_file)
+        btn_open.pack(side="left", padx=20, ipadx=10, ipady=3)
 
-        # --- KHU VỰC HIỂN THỊ NỘI DUNG (Ở giữa) ---
-        content_frame = tk.Frame(root, padx=10, pady=10)
-        content_frame.pack(fill="both", expand=True)
+        self.lbl_file = tk.Label(row1, text="< Chưa có dữ liệu >", font=("Segoe UI", 10, "italic"), bg=self.BG_CARD,
+                                 fg=self.FG_DIM)
+        self.lbl_file.pack(side="left")
 
-        self.mode_left = tk.StringVar(value="Text")
-        self.mode_right = tk.StringVar(value="Hex")
+        # Dòng 2: Nhập khóa bí mật
+        row2 = tk.Frame(header_frame, bg=self.BG_CARD)
+        row2.pack(fill="x", padx=20, pady=(5, 15))
 
-        # Nửa Trái
-        left_frame = tk.Frame(content_frame)
-        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 5))
-        left_header = tk.Frame(left_frame)
-        left_header.pack(fill="x", pady=2)
-        tk.Label(left_header, text="NỘI DUNG GỐC", font=("Arial", 10, "bold")).pack(
-            side="left"
-        )
-        tk.Radiobutton(
-            left_header,
-            text="Text",
-            variable=self.mode_left,
-            value="Text",
-            command=self.refresh_left,
-        ).pack(side="right")
-        tk.Radiobutton(
-            left_header,
-            text="Hex",
-            variable=self.mode_left,
-            value="Hex",
-            command=self.refresh_left,
-        ).pack(side="right")
-        tk.Radiobutton(
-            left_header,
-            text="Binary",
-            variable=self.mode_left,
-            value="Binary",
-            command=self.refresh_left,
-        ).pack(side="right")
-        self.txt_left = tk.Text(left_frame, wrap="word", font=("Consolas", 10))
-        self.txt_left.pack(fill="both", expand=True)
+        tk.Label(row2, text="🔑 Khóa Bí Mật (16 bytes):", font=font_label, bg=self.BG_CARD, fg=self.FG_TEXT).pack(
+            side="left")
 
-        # Nửa Phải
-        right_frame = tk.Frame(content_frame)
-        right_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
-        right_header = tk.Frame(right_frame)
-        right_header.pack(fill="x", pady=2)
-        tk.Label(
-            right_header, text="KẾT QUẢ XỬ LÝ", font=("Arial", 10, "bold"), fg="#d32f2f"
-        ).pack(side="left")
-        tk.Radiobutton(
-            right_header,
-            text="Text",
-            variable=self.mode_right,
-            value="Text",
-            command=self.refresh_right,
-        ).pack(side="right")
-        tk.Radiobutton(
-            right_header,
-            text="Hex",
-            variable=self.mode_right,
-            value="Hex",
-            command=self.refresh_right,
-        ).pack(side="right")
-        tk.Radiobutton(
-            right_header,
-            text="Binary",
-            variable=self.mode_right,
-            value="Binary",
-            command=self.refresh_right,
-        ).pack(side="right")
-        self.txt_right = tk.Text(
-            right_frame, wrap="word", font=("Consolas", 10), bg="#f4f4f4"
-        )
-        self.txt_right.pack(fill="both", expand=True)
+        # Ô nhập liệu viền xám, chữ xanh navy
+        self.entry_key = tk.Entry(row2, show="●", font=font_text, bg="#f8fafc", fg=self.COLOR_ENC,
+                                  insertbackground=self.FG_TEXT, relief="flat", highlightbackground=self.BORDER,
+                                  highlightthickness=1)
+        self.entry_key.pack(side="left", padx=10, ipady=5, ipadx=5, fill="x", expand=True)
 
-    # --- HÀM TIỆN ÍCH ---
-    def print_log(self, message):
-        """In thông báo ra khung Terminal nền đen"""
-        self.txt_log.insert(tk.END, message + "\n")
-        self.txt_log.see(tk.END)  # Cuộn xuống dòng mới nhất
+        cb_show = tk.Checkbutton(row2, text="Hiển thị khóa", variable=self.show_pwd_var, command=self.toggle_password,
+                                 bg=self.BG_CARD, fg=self.FG_TEXT, selectcolor=self.BG_CARD,
+                                 activebackground=self.BG_CARD, font=("Segoe UI", 9))
+        cb_show.pack(side="left", padx=(0, 10))
 
+        # ================= ACTION BAR (CÁC NÚT MÀU LỚN) =================
+        action_frame = tk.Frame(self.root, bg=self.BG_MAIN)
+        action_frame.pack(fill="x", padx=15, pady=(0, 15))
+
+        btn_container = tk.Frame(action_frame, bg=self.BG_MAIN)
+        btn_container.pack(anchor="center")
+
+        # Nút Mã hóa (Xanh Dương)
+        self.btn_encrypt = tk.Button(btn_container, text="🔒 MÃ HÓA (ENCRYPT)", bg=self.COLOR_ENC, fg="white",
+                                     font=font_btn, relief="flat", cursor="hand2", command=self.run_encrypt)
+        self.btn_encrypt.pack(side="left", padx=10, ipadx=20, ipady=8)
+
+        # Nút Giải mã (Xanh Lá)
+        self.btn_decrypt = tk.Button(btn_container, text="🔓 GIẢI MÃ (DECRYPT)", bg=self.COLOR_DEC, fg="white",
+                                     font=font_btn, relief="flat", cursor="hand2", command=self.run_decrypt)
+        self.btn_decrypt.pack(side="left", padx=10, ipadx=20, ipady=8)
+
+        # Nút Lưu (Chìm khi chưa có data, Xanh hoàng gia khi có data)
+        self.btn_save = tk.Button(btn_container, text="💾 XUẤT KẾT QUẢ", bg="#cbd5e1", fg="#64748b", font=font_btn,
+                                  relief="flat", state="disabled", command=self.save_file)
+        self.btn_save.pack(side="left", padx=10, ipadx=20, ipady=8)
+
+        # ================= MAIN CONTENT (CHIA ĐÔI TRÁI PHẢI) =================
+        content_frame = tk.Frame(self.root, bg=self.BG_MAIN)
+        content_frame.pack(fill="both", expand=True, padx=15)
+
+        # NỬA TRÁI (INPUT)
+        left_panel = tk.Frame(content_frame, bg=self.BG_CARD, highlightbackground=self.BORDER, highlightthickness=1)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 5))
+
+        left_header = tk.Frame(left_panel, bg="#e0f2fe", pady=8, padx=10)  # Nền xanh lơ nhạt
+        left_header.pack(fill="x")
+        tk.Label(left_header, text="📥 DỮ LIỆU ĐẦU VÀO", font=font_btn, bg="#e0f2fe", fg=self.COLOR_ENC).pack(
+            side="left")
+
+        self.create_toggle_buttons(left_header, self.in_format, "in")
+
+        self.txt_in = tk.Text(left_panel, wrap="word", font=font_text, bg="#f8fafc", fg=self.FG_TEXT, relief="flat",
+                              padx=10, pady=10, insertbackground=self.FG_TEXT)
+        self.txt_in.pack(fill="both", expand=True, padx=1, pady=1)
+
+        # NỬA PHẢI (OUTPUT)
+        right_panel = tk.Frame(content_frame, bg=self.BG_CARD, highlightbackground=self.BORDER, highlightthickness=1)
+        right_panel.pack(side="right", fill="both", expand=True, padx=(5, 0))
+
+        right_header = tk.Frame(right_panel, bg="#dcfce7", pady=8, padx=10)  # Nền xanh lá nhạt
+        right_header.pack(fill="x")
+        tk.Label(right_header, text="📤 KẾT QUẢ ĐẦU RA", font=font_btn, bg="#dcfce7", fg=self.COLOR_DEC).pack(
+            side="left")
+
+        self.create_toggle_buttons(right_header, self.out_format, "out")
+
+        self.txt_out = tk.Text(right_panel, wrap="word", font=font_text, bg="#ffffff", fg=self.FG_TEXT, relief="flat",
+                               padx=10, pady=10)
+        self.txt_out.pack(fill="both", expand=True, padx=1, pady=1)
+
+        # ================= TERMINAL LOG (NEUTRAL DARK MÀU NEO) =================
+        # Để Log màu đen/xanh navy đậm giúp neo giữ giao diện, tạo độ sâu không bị "lóa"
+        log_frame = tk.Frame(self.root, bg=self.BG_MAIN)
+        log_frame.pack(side="bottom", fill="x", padx=15, pady=15)
+
+        tk.Label(log_frame, text="NHẬT KÝ HỆ THỐNG", font=("Segoe UI", 9, "bold"), bg=self.BG_MAIN, fg=self.FG_DIM,
+                 anchor="w").pack(fill="x")
+
+        self.txt_log = tk.Text(log_frame, height=4, bg="#0f172a", fg="#38bdf8", font=font_text, relief="flat",
+                               highlightbackground=self.BORDER, highlightthickness=1, padx=8, pady=8)
+        self.txt_log.pack(fill="both")
+
+    def create_toggle_buttons(self, parent, variable, target):
+        """Tạo các nút Radio dạng Flat Tab nổi bật trên nền sáng"""
+        frame = tk.Frame(parent, bg=parent.cget("bg"))
+        frame.pack(side="right")
+        modes = ["Text", "Hex", "Binary"]
+        for mode in modes:
+            rb = tk.Radiobutton(frame, text=mode, variable=variable, value=mode,
+                                indicatoron=0, width=6,
+                                font=("Segoe UI", 9, "bold"),
+                                bg="#f1f5f9", fg=self.FG_DIM,
+                                selectcolor=self.COLOR_ACC,
+                                activebackground="#cbd5e1", activeforeground="black",
+                                relief="flat", borderwidth=1, cursor="hand2",
+                                command=lambda t=target: self.refresh_display(t))
+            rb.pack(side="left", padx=1)
+
+    # --- HÀM GIAO DIỆN & TIỆN ÍCH ---
     def toggle_password(self):
-        if self.key_entry.cget("show") == "*":
-            self.key_entry.config(show="")
-            self.btn_show_pwd.config(text="🙈")
+        if self.show_pwd_var.get():
+            self.entry_key.config(show="")
         else:
-            self.key_entry.config(show="*")
-            self.btn_show_pwd.config(text="👁")
+            self.entry_key.config(show="●")
 
-    def format_data(self, data, mode):
-        if not data:
-            return ""
-        limit = 5000
-        slice_data = data[:2000]
-        res = ""
+    def write_log(self, text):
+        time_str = time.strftime("%H:%M:%S")
+        self.txt_log.insert(tk.END, f"[{time_str}] {text}\n")
+        self.txt_log.see(tk.END)
+
+    def process_bytes_to_str(self, data_bytes, mode):
+        if not data_bytes: return ""
+        preview = data_bytes[:3000]
 
         if mode == "Text":
             try:
-                res = data.decode("utf-8")
-                if len(res) > limit:
-                    res = res[:limit] + "\n\n... [CÒN TIẾP] ..."
+                res = preview.decode("utf-8")
+                return res + ("\n\n...[Dữ liệu dài đã được cắt bớt hiển thị]..." if len(data_bytes) > 3000 else "")
             except UnicodeDecodeError:
-                res = "[DỮ LIỆU KHÔNG THỂ ĐỌC DƯỚI DẠNG VĂN BẢN (NON-TEXT)]\n\n Không đọc được nội dung file dạng text."
+                return "< Không thể hiển thị nội dung Text. Vui lòng chọn chế độ xem Hex/Binary >"
         elif mode == "Hex":
-            hex_str = slice_data.hex().upper()
-            res = " ".join(hex_str[i : i + 2] for i in range(0, len(hex_str), 2))
-            if len(data) > 2000:
-                res += "\n\n... [CÒN TIẾP] ..."
+            h = preview.hex().upper()
+            res = " ".join(h[i:i + 2] for i in range(0, len(h), 2))
+            return res + ("\n\n...[Dữ liệu dài đã được cắt bớt hiển thị]..." if len(data_bytes) > 3000 else "")
         elif mode == "Binary":
-            res = " ".join(f"{b:08b}" for b in slice_data[:500])
-            if len(data) > 500:
-                res += "\n\n... [CÒN TIẾP] ..."
+            res = " ".join(f"{b:08b}" for b in preview[:400])
+            return res + ("\n\n...[Dữ liệu dài đã được cắt bớt hiển thị]..." if len(data_bytes) > 400 else "")
 
-        return res
+    def refresh_display(self, target):
+        if target == "in":
+            self.txt_in.delete(1.0, tk.END)
+            self.txt_in.insert(tk.END, self.process_bytes_to_str(self.input_data, self.in_format.get()))
+        else:
+            self.txt_out.config(state="normal")
+            self.txt_out.delete(1.0, tk.END)
+            self.txt_out.insert(tk.END, self.process_bytes_to_str(self.output_data, self.out_format.get()))
 
-    def refresh_left(self):
-        self.txt_left.delete(1.0, tk.END)
-        self.txt_left.insert(
-            tk.END, self.format_data(self.input_data, self.mode_left.get())
-        )
+    def fetch_key(self):
+        k = self.entry_key.get()
+        if not k:
+            messagebox.showwarning("Cảnh báo", "Bạn chưa nhập Khóa Bí Mật!")
+            return None
+        return k.encode("utf-8").ljust(16, b"\0")[:16]
 
-    def refresh_right(self):
-        self.txt_right.config(state="normal")
-        self.txt_right.delete(1.0, tk.END)
-        self.txt_right.insert(
-            tk.END, self.format_data(self.output_data, self.mode_right.get())
-        )
-
-    # --- HÀM XỬ LÝ CHÍNH ---
-    def select_file(self):
-        path = filedialog.askopenfilename(title="Chọn file")
+    # --- HÀM XỬ LÝ LÕI AES ---
+    def load_file(self):
+        path = filedialog.askopenfilename(title="Chọn file dữ liệu")
         if path:
             self.filepath = path
             self.file_name_only = os.path.splitext(os.path.basename(path))[0]
-            self.file_ext = os.path.splitext(path)[1]  # Lấy đuôi file
-
-            self.lbl_filename.config(text=os.path.basename(path), fg="black")
+            self.lbl_file.config(text=os.path.basename(path), fg=self.COLOR_ENC)
 
             with open(path, "rb") as f:
                 self.input_data = f.read()
 
             self.output_data = b""
-            self.btn_export.config(state="disabled")
-            self.mode_left.set("Text")
-            self.refresh_left()
-            self.refresh_right()
-            self.print_log(
-                f"\n[+] Đã tải file '{os.path.basename(path)}' ({len(self.input_data)} bytes)."
-            )
+            # Vô hiệu hóa nút Save
+            self.btn_save.config(state="disabled", bg="#cbd5e1", fg="#64748b", cursor="arrow")
 
-    def get_key(self):
-        key_in = self.key_entry.get()
-        if not key_in:
-            messagebox.showwarning("Cảnh báo", "Vui lòng nhập khóa bí mật!")
-            return None
-        return key_in.encode("utf-8").ljust(16, b"\0")[:16]
+            self.in_format.set("Text")
+            self.refresh_display("in")
+            self.refresh_display("out")
+            self.write_log(f"Đã mở file: {os.path.basename(path)} ({len(self.input_data)} bytes)")
 
-    def encrypt_action(self):
+    def run_encrypt(self):
         if not self.input_data:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn file gốc!")
+            messagebox.showinfo("Lỗi", "Vui lòng Mở File Gốc trước!")
             return
 
-        key_str = self.get_key()
-        if not key_str:
-            return
+        key_bytes = self.fetch_key()
+        if not key_bytes: return
 
         try:
-            self.print_log("[*] Đang tiến hành MÃ HÓA...")
+            self.write_log("Đang tiến hành MÃ HÓA AES-128...")
             self.root.update()
 
-            r_keys = AES.key_expansion(key_str)
+            round_keys = AES.key_expansion(key_bytes)
             pad_len = 16 - (len(self.input_data) % 16)
-            data_to_encrypt = self.input_data + bytes([pad_len] * pad_len)
+            data_padded = self.input_data + bytes([pad_len] * pad_len)
 
             start_time = time.perf_counter()
-            self.output_data = b"".join(
-                [
-                    AES.aes_main(data_to_encrypt[i : i + 16], r_keys, "encrypt")
-                    for i in range(0, len(data_to_encrypt), 16)
-                ]
-            )
+            self.output_data = b"".join([
+                AES.aes_main(data_padded[i: i + 16], round_keys, "encrypt")
+                for i in range(0, len(data_padded), 16)
+            ])
             end_time = time.perf_counter()
-            time_encrypt = end_time - start_time
 
             self.current_action = "enc"
-            self.mode_right.set("Hex")
-            self.refresh_right()
-            self.btn_export.config(state="normal")
+            self.out_format.set("Hex")
+            self.refresh_display("out")
 
-            self.print_log(f"[THỜI GIAN MÃ HÓA]: {time_encrypt:.6f} giây")
-            self.print_log(f"-> Sẵn sàng xuất file mã hóa (.bin)")
+            # Bật nút Save với màu Xanh Hoàng Gia nổi bật
+            self.btn_save.config(state="normal", bg=self.COLOR_SAV, fg="white", cursor="hand2")
+            self.write_log(f"Hoàn tất Mã hóa. Thời gian: {end_time - start_time:.5f}s")
 
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Đã xảy ra lỗi:\n{str(e)}")
+            messagebox.showerror("Ngoại lệ", f"Mã hóa thất bại. Chi tiết:\n{e}")
 
-    def decrypt_action(self):
+    def run_decrypt(self):
         if not self.input_data:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn file gốc để giải mã!")
-            return
-        if len(self.input_data) % 16 != 0:
-            messagebox.showerror(
-                "Lỗi Dữ Liệu",
-                "File đầu vào không hợp lệ! Kích thước file giải mã phải chia hết cho 16. Bạn có chắc đây là file đã được mã hóa bằng AES-128 không?",
-            )
+            messagebox.showinfo("Lỗi", "Vui lòng Mở File Mã Hóa trước!")
             return
 
-        key_str = self.get_key()
-        if not key_str:
+        if len(self.input_data) % 16 != 0:
+            messagebox.showerror("Lỗi Cấu Trúc",
+                                 "Dữ liệu không hợp lệ. File mã hóa AES phải có kích thước chia hết cho 16 bytes.")
             return
+
+        key_bytes = self.fetch_key()
+        if not key_bytes: return
 
         try:
-            self.print_log("[*] Đang tiến hành GIẢI MÃ...")
+            self.write_log("Đang tiến hành GIẢI MÃ AES-128...")
             self.root.update()
 
-            r_keys = AES.key_expansion(key_str)
+            round_keys = AES.key_expansion(key_bytes)
 
             start_time = time.perf_counter()
-            decrypted_raw = b"".join(
-                [
-                    AES.aes_main(self.input_data[i : i + 16], r_keys, "decrypt")
-                    for i in range(0, len(self.input_data), 16)
-                ]
-            )
+            decrypted_raw = b"".join([
+                AES.aes_main(self.input_data[i: i + 16], round_keys, "decrypt")
+                for i in range(0, len(self.input_data), 16)
+            ])
 
-            # Gỡ Padding (Tuyệt đối an toàn giống AES.py)
-            pad_len = decrypted_raw[-1]
-            if 0 < pad_len <= 16:
-                self.output_data = decrypted_raw[:-pad_len]
+            pad_val = decrypted_raw[-1]
+            if 0 < pad_val <= 16:
+                self.output_data = decrypted_raw[:-pad_val]
             else:
                 self.output_data = decrypted_raw
+
             end_time = time.perf_counter()
-            time_decrypt = end_time - start_time
 
             self.current_action = "dec"
-            self.mode_left.set("Hex")
-            self.refresh_left()
-            self.mode_right.set("Text")
-            self.refresh_right()
-            self.btn_export.config(state="normal")
+            self.in_format.set("Hex")
+            self.refresh_display("in")
+            self.out_format.set("Text")
+            self.refresh_display("out")
 
-            self.print_log(f"[THỜI GIAN GIẢI MÃ]: {time_decrypt:.6f} giây")
-            self.print_log(f"-> Sẵn sàng xuất file giải mã.")
+            self.btn_save.config(state="normal", bg=self.COLOR_SAV, fg="white", cursor="hand2")
+            self.write_log(f"Hoàn tất Giải mã. Thời gian: {end_time - start_time:.5f}s")
 
         except Exception as e:
-            messagebox.showerror(
-                "Lỗi", f"Giải mã thất bại. Sai khóa hoặc file hỏng!\nChi tiết: {str(e)}"
-            )
+            messagebox.showerror("Lỗi Giải Mã",
+                                 "Giải mã thất bại! Vui lòng kiểm tra lại tính toàn vẹn của file hoặc nhập sai Khóa.")
 
-    def export_file(self):
-        if not self.output_data:
-            return
+    def save_file(self):
+        if not self.output_data: return
 
-        # --- ÉP CHUẨN ĐỊNH DẠNG FILE ---
         if self.current_action == "enc":
-            # Nếu đang MÃ HÓA, ép phải lưu ra file .bin để không bị hỏng dữ liệu
-            suggested_name = f"encrypted_{self.file_name_only}.bin"
-            filepath = filedialog.asksaveasfilename(
-                title="Lưu file Mã Hóa",
-                initialfile=suggested_name,
-                defaultextension=".bin",
-                filetypes=[("Binary Encrypted File", "*.bin")],
-            )
+            def_ext, file_types = ".bin", [("AES Encrypted File", "*.bin")]
+            sugg_name = f"Encrypted_{self.file_name_only}.bin"
         else:
-            # Nếu đang GIẢI MÃ, gợi ý lại đuôi file text (nếu có)
-            suggested_name = f"decrypted_{self.file_name_only}.txt"
-            filepath = filedialog.asksaveasfilename(
-                title="Lưu file Giải Mã",
-                initialfile=suggested_name,
-                defaultextension=".txt",
-                filetypes=[("Text File", "*.txt"), ("All Files", "*.*")],
-            )
+            def_ext, file_types = ".txt", [("Text File", "*.txt"), ("All Files", "*.*")]
+            sugg_name = f"Decrypted_{self.file_name_only}.txt"
 
-        if filepath:
+        path = filedialog.asksaveasfilename(title="Lưu dữ liệu", initialfile=sugg_name, defaultextension=def_ext,
+                                            filetypes=file_types)
+
+        if path:
             try:
-                with open(filepath, "wb") as f:
+                with open(path, "wb") as f:
                     f.write(self.output_data)
-
-                self.print_log("-" * 50)
-                self.print_log(f"Đã lưu thành công: {os.path.basename(filepath)}")
-                messagebox.showinfo("Thành công", f"Đã xuất file tại:\n{filepath}")
+                self.write_log(f"Đã lưu kết quả thành công tại: {path}")
+                messagebox.showinfo("Thành công", f"Đã xuất dữ liệu ra file:\n{os.path.basename(path)}")
             except Exception as e:
-                messagebox.showerror("Lỗi lưu file", f"Không thể lưu file:\n{str(e)}")
+                messagebox.showerror("Lỗi Lưu File", str(e))
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = AESInterface(root)
-    root.mainloop()
+    app_root = tk.Tk()
+    app = AESOceanBreezeApp(app_root)
+    app_root.mainloop()
