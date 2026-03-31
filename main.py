@@ -39,8 +39,7 @@ class AESOceanBreezeApp:
         self.out_format = tk.StringVar(value="Hex")
 
         self._build_ui()
-        self.write_log("Hệ thống AES-128 Ocean Breeze đã khởi động.")
-        self.write_log("Giao diện: Sáng (Light) | Chủ đạo: Trắng - Xanh Dương - Xanh Lá.")
+        self.write_log("Hệ thống AES-128.")
 
     def _build_ui(self):
         font_title = ("Segoe UI", 16, "bold")
