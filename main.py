@@ -11,7 +11,7 @@ class AESOceanBreezeApp:
     def __init__(self, root):
         self.root = root
         self.root.title("AES Studio - Nhóm 18")
-        self.root.geometry("1100x750")
+        self.root.geometry("1100x900")
 
         # --- BẢNG MÀU SÁNG (WHITE / BLUE / GREEN) ---
         self.BG_MAIN = "#f0f4f8"
